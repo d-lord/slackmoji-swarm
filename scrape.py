@@ -27,7 +27,9 @@ def parse_emoji_from_html(soup: BeautifulSoup):
     for emoji_row in all_emoji_rows:
         url = emoji_row.find("td", headers="custom_emoji_image").span["data-original"]
         name = emoji_row.find("td", headers="custom_emoji_name").string.strip().replace(':', '')
-        yield (name, url)
+        type = emoji_row.find("td", headers="custom_emoji_type").text
+        if not type.startswith("Alias for"):
+            yield (name, url)
 
 
 def download_all_emoji(emoji_pairs: Iterable[Tuple[str, str]], output_dir: str,
@@ -49,9 +51,26 @@ def download_all_emoji(emoji_pairs: Iterable[Tuple[str, str]], output_dir: str,
         name, url = pair
         logger.info(f"{name.ljust(15)} {url}")
         r = fetch_method(url)
-        with open(os.path.join(output_dir, name+".png"), 'wb') as out:
+        ext = get_file_extension(url, name)
+        with open(os.path.join(output_dir, name+ext), 'wb') as out:
             out.write(r.content)
 
+
+def get_file_extension(url, name=None, log=True):
+    """
+    Split a URL and return the file extension.
+    :param url: Input data (eg 'https://foo.com/image.png')
+    :param name: A 'friendly name' for logging warnings.
+    :param log: Whether to log warnings on dodgy input.
+    :return: '.png' for the sample input.
+    """
+    start = url.rfind('.')
+    if start == -1 and log:
+        logger.warning(f"Dodgy file extension on last character for {name}: using no extension")
+    ext = url[start:]
+    if len(url) - start < 4:
+        logger.warning(f"Dodgy file extension for {name}: using anyway: '{ext}'")
+    return ext
 
 if __name__ == "__main__":
     """
