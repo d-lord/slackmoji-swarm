@@ -4,11 +4,12 @@ import scrape, config
 from bs4 import BeautifulSoup
 import requests
 from tempfile import TemporaryDirectory
+import os
 
 
 class PerfTesting(unittest.TestCase):
 
-    __pairs_tested = 50  # if the file doesn't contain this many, we'll just test the ones it has
+    __pairs_tested = 500  # if the file doesn't contain this many, we'll just test the ones it has
 
     def setUp(self):
         with open(config.in_file, 'r', encoding="UTF-8") as html:
@@ -21,7 +22,8 @@ class PerfTesting(unittest.TestCase):
             start = time()
             scrape.download_all_emoji(self.emoji_pairs[:self.__pairs_tested], dest, requests.get)
             end = time()
-        print(f"Completed in {end - start} seconds.")
+            count = len(os.listdir(dest))
+        print(f"Completed {count} files in {end - start} seconds.")
 
     def testWithConnectionReuse(self):
         session = requests.Session()
@@ -29,5 +31,6 @@ class PerfTesting(unittest.TestCase):
             start = time()
             scrape.download_all_emoji(self.emoji_pairs[:self.__pairs_tested], dest, session.get)
             end = time()
-        print(f"Completed in {end - start} seconds.")
+            count = len(os.listdir(dest))
+        print(f"Completed {count} files in {end - start} seconds.")
         session.close()
