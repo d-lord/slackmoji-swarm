@@ -21,7 +21,7 @@ def parse_emoji_from_html(soup: BeautifulSoup):
     """
     Generate (name, url) pairs of emoji by parsing a soup. Format defined 13-Oct-2017.
     :param soup:
-    :return:
+    :return: (name, url) pairs of emoji.
     """
     all_emoji_rows = soup.find_all("tr", "emoji_row")
     for emoji_row in all_emoji_rows:
