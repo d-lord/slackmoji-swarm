@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import requests
 from tempfile import TemporaryDirectory
 import asyncio, aiohttp
+import os
 
 
 class PerfTesting(unittest.TestCase):
@@ -24,4 +25,5 @@ class PerfTesting(unittest.TestCase):
                 start = time()
                 loop.run_until_complete(scrape.download_all_emoji(self.emoji_pairs[:self.__pairs_tested], dest, session))
                 end = time()
-        print(f"Completed in {end - start} seconds.")
+                count = len(os.listdir(dest))
+        print(f"Completed {count} files in {end - start} seconds.")
