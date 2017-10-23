@@ -33,7 +33,7 @@ def parse_emoji_from_html(soup: BeautifulSoup):
             yield (name, url)
 
 
-def download_all_emoji(emoji_pairs: Iterable[Tuple[str, str]], output_dir: str, session: aiohttp.ClientSession):
+async def download_all_emoji(emoji_pairs: Iterable[Tuple[str, str]], output_dir: str, session: aiohttp.ClientSession):
     """
     Given (name, url) pairs, download them as output_dir/{name}.
     :param emoji_pairs: Iterable of (name, url) pairs. 'name'.png will become the filename.
@@ -51,7 +51,7 @@ def download_all_emoji(emoji_pairs: Iterable[Tuple[str, str]], output_dir: str, 
     tasks = [http_client(url, name) for name, url in emoji_pairs]
     errors = {}
     for future in asyncio.as_completed(tasks):
-        data, name, url, *rest = yield from future
+        data, name, url, *rest = await future
         if rest:
             logging.debug(f"Found extra info in the future: {rest}")
         try:
@@ -118,15 +118,19 @@ def get_file_extension(url, name=None, log=True):
     return ext
 
 
-if __name__ == "__main__":
+async def main():
     """
     Use the config file to kick off a mass download.
     """
     with open(config.in_file, 'r', encoding="UTF-8") as html:
         soup = BeautifulSoup(html, "html.parser")
     all_emoji = parse_emoji_from_html(soup)
-    with aiohttp.ClientSession() as session:
-        loop = asyncio.get_event_loop()
-        results = loop.run_until_complete(download_all_emoji(all_emoji, config.output_dir, session))
+    async with aiohttp.ClientSession() as session:
+        results = await download_all_emoji(all_emoji, config.output_dir, session)
         if results:
             print(f"Encountered errors in processing: {results}")
+
+
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
