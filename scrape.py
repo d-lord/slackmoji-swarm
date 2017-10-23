@@ -92,13 +92,12 @@ def chunked_http_client(num_chunks, session, timeout=30):
     """
     semaphore = asyncio.Semaphore(num_chunks)
 
-    @asyncio.coroutine
-    def http_get(url, name):
+    async def http_get(url, name):
         nonlocal semaphore
-        with (yield from semaphore):
-            response = yield from session.get(url, timeout=timeout)
-            body = yield from response.content.read()
-            yield from response.wait_for_close()  # jeez, asyncio really likes yielding in coroutines
+        with (await semaphore):
+            response = await session.get(url, timeout=timeout)
+            body = await response.content.read()
+            await response.wait_for_close()
         return body, name, url
     return http_get
 
