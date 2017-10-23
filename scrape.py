@@ -33,12 +33,14 @@ def parse_emoji_from_html(soup: BeautifulSoup):
             yield (name, url)
 
 
-async def download_all_emoji(emoji_pairs: Iterable[Tuple[str, str]], output_dir: str, session: aiohttp.ClientSession):
+async def download_all_emoji(emoji_pairs: Iterable[Tuple[str, str]], output_dir: str, session: aiohttp.ClientSession,
+                             num_chunks: int=200):
     """
     Given (name, url) pairs, download them as output_dir/{name}.
     :param emoji_pairs: Iterable of (name, url) pairs. 'name'.png will become the filename.
     :param output_dir: Directory to save files to. Not checked for security.
     :param session: An aiohttp.ClientSession for the HTTP requests.
+    :param num_chunks: Maximum number of concurrent requests.
     :return: {"emoji name": Exception} for any failed requests.
 
     Credit to https://iliauk.com/2016/03/07/high-performance-python-sessions-async-multi-tasking/ for the async impl.
@@ -46,7 +48,7 @@ async def download_all_emoji(emoji_pairs: Iterable[Tuple[str, str]], output_dir:
     if not os.path.isdir(output_dir):
         logger.info(f"Creating output directory '{output_dir}'.")
         os.mkdir(config.output_dir)
-    http_client = chunked_http_client(200, session)
+    http_client = chunked_http_client(num_chunks, session)
     # http_client returns futures, save all the futures to a list
     tasks = [http_client(url, name) for name, url in emoji_pairs]
     errors = {}
@@ -126,7 +128,7 @@ async def main():
         soup = BeautifulSoup(html, "html.parser")
     all_emoji = parse_emoji_from_html(soup)
     async with aiohttp.ClientSession() as session:
-        results = await download_all_emoji(all_emoji, config.output_dir, session)
+        results = await download_all_emoji(all_emoji, config.output_dir, session, num_chunks=config.concurrent_requests)
         if results:
             print(f"Encountered errors in processing: {results}")
 
