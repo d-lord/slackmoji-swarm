@@ -1,5 +1,7 @@
 # Slackmoji Swarm
 
+**[The best parts of this project have been merged into slack-emojinator; please consider using that instead.](https://github.com/smashwilson/slack-emojinator)**
+
 Mass downloader of Slack emoji.
 
 #### Features
